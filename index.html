@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Speicher-Ledger</title>
+<meta name="description" content="Räum deinen Handyspeicher auf – Karteikarte für Karteikarte.">
+<meta name="theme-color" content="#23303A">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Speicher-Ledger">
+<style>
+  :root{
+    --ink:#23303A;
+    --ink-soft:#324451;
+    --paper:#EEF0EC;
+    --paper-dim:#E2E5DD;
+    --amber:#E3A63E;
+    --amber-dark:#B9822B;
+    --forest:#4F7C6B;
+    --brick:#B0503A;
+    --line: rgba(35,48,58,0.14);
+    --shadow: 0 1px 0 rgba(35,48,58,0.06);
+    box-sizing:border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:inherit;}
+  html{scroll-padding-top: env(safe-area-inset-top, 0px);}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background: var(--ink);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif{
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  }
+  .wrap{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+  }
+  header.hero{
+    padding: 4px 4px 22px;
+  }
+  .kicker{
+    color: var(--amber);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    margin: 0 0 6px;
+  }
+  h1{
+    font-weight: 700;
+    font-size: clamp(28px, 7vw, 38px);
+    line-height: 1.1;
+    color: var(--paper);
+    margin: 0 0 10px;
+  }
+  .lede{
+    color: #C7CFCB;
+    font-size: 15.5px;
+    line-height: 1.5;
+    margin: 0 0 22px;
+    max-width: 46ch;
+  }
+
+  .gauge-card{
+    background: var(--paper);
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+  }
+  .gauge-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom: 10px;
+  }
+  .gauge-num{
+    font-family: Georgia, serif;
+    font-weight:700;
+    font-size: 26px;
+    color: var(--ink);
+  }
+  .gauge-label{
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .gauge-track{
+    height: 12px;
+    border-radius: 7px;
+    background: var(--paper-dim);
+    overflow:hidden;
+    border: 1px solid var(--line);
+  }
+  .gauge-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--forest), var(--amber));
+    width:0%;
+    transition: width .5s ease;
+    border-radius: 7px 0 0 7px;
+  }
+  .gauge-tick-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color: #8a9490;
+    margin-top:6px;
+  }
+
+  .estimate{
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+    display:none;
+  }
+  .estimate.show{display:block;}
+  .estimate b{color:var(--ink);}
+
+  .categories{
+    margin-top: 22px;
+    display:flex;
+    flex-direction:column;
+    gap: 16px;
+  }
+
+  .card{
+    position:relative;
+    margin-top: 14px;
+  }
+  .tab{
+    position:absolute;
+    top:-11px;
+    left: 18px;
+    background: var(--paper);
+    border-radius: 8px 8px 0 0;
+    padding: 5px 12px 3px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    box-shadow: 0 -2px 0 rgba(0,0,0,0.02) inset;
+  }
+  .panel{
+    background: var(--paper);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    overflow:hidden;
+  }
+  .cat-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 16px 16px 14px;
+    background: transparent;
+    border:none;
+    text-align:left;
+    cursor:pointer;
+    font: inherit;
+    color: var(--ink);
+  }
+  .cat-icon{
+    width: 30px;
+    height: 30px;
+    flex: none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius: 8px;
+    background: var(--paper-dim);
+    font-size: 15px;
+  }
+  .cat-title{
+    flex:1;
+    min-width:0;
+  }
+  .cat-title h3{
+    margin:0;
+    font-size: 16.5px;
+    font-family: Georgia, serif;
+    font-weight:700;
+  }
+  .cat-title span{
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .cat-count{
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--paper-dim);
+    flex: none;
+  }
+  .cat-count.done{ background: var(--forest); color: var(--paper); }
+  .chevron{
+    transition: transform .2s ease;
+    color: var(--ink-soft);
+    flex: none;
+  }
+  .card.open .chevron{ transform: rotate(90deg); }
+
+  .cat-body{
+    max-height:0;
+    overflow:hidden;
+    transition: max-height .25s ease;
+  }
+  .card.open .cat-body{ max-height: 1200px; }
+
+  ul.items{
+    list-style:none;
+    margin:0;
+    padding: 0 16px 14px;
+    border-top: 1px solid var(--line);
+  }
+  ul.items li{
+    display:flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    align-items:flex-start;
+  }
+  ul.items li:last-child{ border-bottom:none; }
+  .check{
+    width: 22px;
+    height: 22px;
+    flex:none;
+    margin-top: 1px;
+    border-radius: 5px;
+    border: 2px solid var(--ink-soft);
+    background: transparent;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+  .check.checked{
+    background: var(--forest);
+    border-color: var(--forest);
+  }
+  .check svg{ width:13px; height:13px; opacity:0; }
+  .check.checked svg{ opacity:1; }
+  .item-text{ flex:1; }
+  .item-text .t{
+    font-size: 14.5px;
+    line-height:1.4;
+    display:block;
+  }
+  .item-text .tip{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    display:block;
+    margin-top:2px;
+  }
+  li.checked .t{
+    text-decoration: line-through;
+    color: #8a9490;
+  }
+  .del-item{
+    flex:none;
+    background:none;
+    border:none;
+    color:#b7bdb8;
+    font-size: 18px;
+    cursor:pointer;
+    padding: 0 2px;
+    line-height:1;
+  }
+
+  .add-row{
+    display:flex;
+    gap:8px;
+    padding: 12px 16px 16px;
+  }
+  .add-row input{
+    flex:1;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 13.5px;
+    font-family: inherit;
+  }
+  .add-row button{
+    border:none;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 8px;
+    padding: 0 16px;
+    font-size: 13.5px;
+    cursor:pointer;
+  }
+
+  .footer-actions{
+    margin-top: 30px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .ghost-btn{
+    flex:1;
+    min-width: 140px;
+    background: transparent;
+    border: 1px solid rgba(238,240,236,0.28);
+    color: #C7CFCB;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    cursor:pointer;
+    font-family: inherit;
+  }
+  .ghost-btn:active{ background: rgba(255,255,255,0.06); }
+
+  .install-note{
+    margin-top: 26px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(238,240,236,0.06);
+    border: 1px solid rgba(238,240,236,0.12);
+    color: #C7CFCB;
+    font-size: 13px;
+    line-height:1.55;
+  }
+  .install-note b{ color: var(--paper); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">SPEICHER-LEDGER</p>
+    <h1>Aufräumen,<br>Karteikarte für Karteikarte.</h1>
+    <p class="lede">Kein Zauber-Button, der von selbst Speicher freiräumt – das kann keine App im Browser. Stattdessen: eine geführte Checkliste durch die Stellen, wo sich Speicher wirklich versteckt.</p>
+
+    <div class="gauge-card">
+      <div class="gauge-top">
+        <span class="gauge-num" id="pct">0%</span>
+        <span class="gauge-label" id="fraction">0 von 0 Aufgaben erledigt</span>
+      </div>
+      <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
+      <div class="gauge-tick-row"><span>Voll</span><span>Aufgeräumt</span></div>
+      <div class="estimate" id="estimateBox">
+        Browser-Speicher dieser Seite: <b id="estimateText">–</b>
+      </div>
+    </div>
+  </header>
+
+  <div class="categories" id="categories"></div>
+
+  <div class="footer-actions">
+    <button class="ghost-btn" id="resetBtn">Fortschritt zurücksetzen</button>
+    <button class="ghost-btn" id="exportBtn">Als Datei sichern</button>
+  </div>
+
+  <div class="install-note">
+    <b>Zum Homescreen hinzufügen:</b> iPhone (Safari) → Teilen-Symbol → „Zum Home-Bildschirm". Android (Chrome) → Menü (⋮) → „App installieren" bzw. „Zum Startbildschirm hinzufügen". Danach startet Speicher-Ledger wie eine echte App, auch offline.
+  </div>
+</div>
+
+<script>
+const DATA = [
+  { id:"fotos", icon:"🖼️", title:"Fotos & Videos", sub:"meist der größte Brocken", items:[
+    ["Screenshots durchsehen und unnötige löschen","Alter Ordner „Screenshots" wächst leise über Monate."],
+    ["Videos, die schon gesichert sind, vom Handy löschen","Wenn sie in der Cloud oder am PC liegen, muss die Originaldatei nicht doppelt existieren."],
+    ["WhatsApp/Telegram-Fotoordner aufräumen","Empfangene Medien landen automatisch zusätzlich in der Galerie."],
+    ["Live-Photos / Burst-Fotos ausdünnen","Von 10 fast identischen Bildern reicht meist eins."],
+    ["Duplikate-Erkennung der Fotos-App nutzen","iPhone: Fotos-App → Alben → Duplikate. Android: Google Fotos → Bibliothek → Duplikate zusammenführen."],
+    ["Papierkorb der Fotos-App leeren","Gelöschte Fotos liegen oft noch 30 Tage im „Kürzlich gelöscht"-Album und belegen weiter Platz."]
+  ]},
+  { id:"apps", icon:"📦", title:"Apps", sub:"ungenutzt, aber installiert", items:[
+    ["Apps, die seit Monaten nicht geöffnet wurden, deinstallieren","Einstellungen zeigen meist eine Liste sortiert nach Nutzung oder Größe."],
+    ["App-Cache großer Apps leeren","Bei Android oft direkt in App-Info → Speicher → Cache leeren möglich."],
+    ["Offline-Karten / heruntergeladene Bereiche prüfen","Google Maps & Co. können pro Region mehrere hundert MB belegen."],
+    ["Ausstehende App-Updates installieren oder App entfernen","Alte App-Versionen sammeln sich manchmal parallel an."]
+  ]},
+  { id:"downloads", icon:"📥", title:"Downloads", sub:"der vergessene Ordner", items:[
+    ["Download-Ordner öffnen und durchsehen","PDFs, Rechnungen, Installer – meist ungeordnet und nie wieder angeschaut."],
+    ["Alte Installationsdateien (.apk, .zip) löschen","Werden nach der Installation nicht mehr gebraucht."],
+    ["Heruntergeladene Musik/Podcasts prüfen, die schon gehört wurden",""]
+  ]},
+  { id:"chats", icon:"💬", title:"Nachrichten & Anhänge", sub:"Medien, die sich stapeln", items:[
+    ["WhatsApp: Speicher-Übersicht öffnen und große Chats prüfen","Einstellungen → Speicher und Daten → Speicher verwalten zeigt die größten Chats."],
+    ["Videos/Sprachnachrichten in Chats löschen, die erledigt sind",""],
+    ["Mail-Anhänge (Fotos, PDFs) aus der Mail-App entfernen, wenn gesichert",""],
+    ["Auto-Download von Medien in Messenger-Apps deaktivieren","Verhindert, dass sich der Ordner von selbst wieder füllt."]
+  ]},
+  { id:"system", icon:"🗄️", title:"System & Sonstiges", sub:"Kleinvieh macht auch Mist", items:[
+    ["Browser-Cache leeren","Einstellungen der Browser-App → Datenschutz → Browserdaten löschen."],
+    ["Offline-Musik/Podcast-Downloads in Streaming-Apps prüfen","Spotify, YouTube Music etc. speichern Downloads oft dauerhaft."],
+    ["Papierkorb/„Kürzlich gelöscht" in Dateien-App leeren",""],
+    ["Alte Sicherungen auf dem Gerät selbst prüfen","Manche Backup-Apps legen zusätzlich lokale Kopien an."]
+  ]}
+];
+
+const STORAGE_KEY = "speicher-ledger-state-v1";
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { checked:{}, custom:{} };
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+let state = loadState();
+if(!state.custom) state.custom = {};
+if(!state.checked) state.checked = {};
+if(!state.open) state.open = {};
+
+function allItemsFor(cat){
+  const base = cat.items.map((it,i)=>({key:cat.id+":"+i, text:it[0], tip:it[1], custom:false}));
+  const customs = (state.custom[cat.id]||[]).map((text,i)=>({key:cat.id+":c"+i, text, tip:"", custom:true, idx:i}));
+  return base.concat(customs);
+}
+
+function render(){
+  const wrap = document.getElementById("categories");
+  wrap.innerHTML = "";
+  let totalDone=0, totalAll=0;
+
+  DATA.forEach(cat=>{
+    const items = allItemsFor(cat);
+    const done = items.filter(it=>state.checked[it.key]).length;
+    totalDone += done; totalAll += items.length;
+
+    const card = document.createElement("div");
+    card.className = "card" + (state.open[cat.id] ? " open":"");
+
+    const tab = document.createElement("div");
+    tab.className = "tab";
+    tab.textContent = cat.sub;
+    card.appendChild(tab);
+
+    const panel = document.createElement("div");
+    panel.className = "panel";
+
+    const head = document.createElement("button");
+    head.className = "cat-head";
+    head.innerHTML = `
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-title"><h3>${cat.title}</h3></div>
+      <div class="cat-count ${done===items.length && items.length>0 ? 'done':''}">${done}/${items.length}</div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    `;
+    head.addEventListener("click", ()=>{
+      state.open[cat.id] = !state.open[cat.id];
+      saveState();
+      render();
+    });
+    panel.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className = "cat-body";
+
+    const ul = document.createElement("ul");
+    ul.className = "items";
+    items.forEach(it=>{
+      const li = document.createElement("li");
+      if(state.checked[it.key]) li.classList.add("checked");
+      const checkBtn = document.createElement("button");
+      checkBtn.className = "check" + (state.checked[it.key] ? " checked":"");
+      checkBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      checkBtn.addEventListener("click", ()=>{
+        state.checked[it.key] = !state.checked[it.key];
+        saveState();
+        render();
+      });
+      const textWrap = document.createElement("div");
+      textWrap.className = "item-text";
+      textWrap.innerHTML = `<span class="t">${it.text}</span>` + (it.tip ? `<span class="tip">${it.tip}</span>` : "");
+      li.appendChild(checkBtn);
+      li.appendChild(textWrap);
+      if(it.custom){
+        const del = document.createElement("button");
+        del.className = "del-item";
+        del.textContent = "×";
+        del.title = "Eigene Aufgabe entfernen";
+        del.addEventListener("click", ()=>{
+          state.custom[cat.id].splice(it.idx,1);
+          delete state.checked[it.key];
+          saveState();
+          render();
+        });
+        li.appendChild(del);
+      }
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    const addRow = document.createElement("div");
+    addRow.className = "add-row";
+    addRow.innerHTML = `<input type="text" placeholder="Eigene Aufgabe hinzufügen…" maxlength="120"><button>+</button>`;
+    const input = addRow.querySelector("input");
+    const addBtn = addRow.querySelector("button");
+    function addCustom(){
+      const val = input.value.trim();
+      if(!val) return;
+      if(!state.custom[cat.id]) state.custom[cat.id] = [];
+      state.custom[cat.id].push(val);
+      saveState();
+      render();
+    }
+    addBtn.addEventListener("click", addCustom);
+    input.addEventListener("keydown", e=>{ if(e.key==="Enter") addCustom(); });
+    body.appendChild(addRow);
+
+    panel.appendChild(body);
+    card.appendChild(panel);
+    wrap.appendChild(card);
+  });
+
+  const pct = totalAll ? Math.round(100*totalDone/totalAll) : 0;
+  document.getElementById("pct").textContent = pct + "%";
+  document.getElementById("fraction").textContent = `${totalDone} von ${totalAll} Aufgaben erledigt`;
+  document.getElementById("gaugeFill").style.width = pct + "%";
+}
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Wirklich den gesamten Fortschritt zurücksetzen? Eigene Aufgaben bleiben erhalten, Häkchen werden entfernt.")){
+    state.checked = {};
+    saveState();
+    render();
+  }
+});
+
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "speicher-ledger-fortschritt.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+// Best-effort browser storage estimate (not full device storage – browsers can't see that)
+if(navigator.storage && navigator.storage.estimate){
+  navigator.storage.estimate().then(est=>{
+    if(est && est.usage!=null && est.quota){
+      const mb = (est.usage/1048576).toFixed(1);
+      const quotaMb = (est.quota/1048576).toFixed(0);
+      const box = document.getElementById("estimateBox");
+      document.getElementById("estimateText").textContent = `${mb} MB von ${quotaMb} MB verfügbarem Browser-Speicher`;
+      box.classList.add("show");
+    }
+  }).catch(()=>{});
+}
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+
+render();
+</script>
+</body>
+</html>
