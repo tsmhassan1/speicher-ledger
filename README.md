@@ -10,7 +10,7 @@ und Android gleichermaßen) nicht auf deine Fotos, Apps oder Dateien
 zugreifen und nichts automatisch löschen. Diese App zeigt dir stattdessen,
 wo du selbst nachsehen solltest, und merkt sich deinen Fortschritt.
 
-## 1. Auf GitHub hochladen
+## 1. Auf GitHub hochladen 
 
 1. Erstelle ein neues Repository auf [github.com](https://github.com/new),
    z. B. `speicher-ledger`. Öffentlich ("Public") muss es sein, damit GitHub
